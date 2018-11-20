@@ -56,7 +56,9 @@ void block(FILE * file) {
 			pop(&symbolTable);
 			scope--;
 			token = scanner(file);
-			printTable();
+
+			//printTable();
+
 		} else {
 			token.error = ELEVENTH;
 			programErrorPrinter();
@@ -99,7 +101,7 @@ void variables(FILE * file) {
 					exit(EXIT_SUCCESS);
 				}
 			} else {
-				token.error = TWENTY_EIGHTH;
+				token.error = THIRTIETH;
 				programErrorPrinter();
 				exit(EXIT_SUCCESS);
 			}

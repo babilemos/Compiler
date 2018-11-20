@@ -134,20 +134,20 @@ Token scanner(FILE * file) {
 				}
 				if(feof(file)) {
 					token.code = END_OF_FILE;
-				} else {
-					continue;
+				} else if(character == NEWLINE) {
+					++line; column = 0;
 				}
 			} else if(character == '*') {
 				Restart: while(character != '*' && !feof(file)) {
 							character = fgetc(file);
 							++column;
 							if(character == NEWLINE) {
-								++line;
+								++line; column = 0;
 							}
 						 }
 						 if(feof(file)) {
 							token.error = THIRD;
-							token.line = ++line; token.column = column;
+							token.line = line; token.column = column;
 							scannerErrorPrinter();
 							exit(EXIT_SUCCESS);
 						} else if(character == '*') {
@@ -155,12 +155,11 @@ Token scanner(FILE * file) {
 							++column;
 							if(feof(file)) {
 								token.error = THIRD;
-								token.line = ++line; token.column = column;
+								token.line = line; token.column = column;
 								scannerErrorPrinter();
 								exit(EXIT_SUCCESS);
 							}
 							else if(character == '/') {
-								++line;
 								continue;
 							} else {
 								goto Restart;
@@ -182,7 +181,7 @@ Token scanner(FILE * file) {
 				token.code = NOT_EQUAL; ++column; 
 			} else {
 				token.error = FIRST; 
-				token.line = ++line; token.column = column;
+				token.line = line; token.column = column;
 				scannerErrorPrinter(); 
 				exit(EXIT_SUCCESS);
 			}
@@ -218,10 +217,10 @@ Token scanner(FILE * file) {
 		
 		else if(character == '_' || isalpha(character)) {
 			for(counter = 0; character == '_' || isalpha(character) || isdigit(character); ++counter) {
-				token.lexeme[counter] = character; ++column;
-				character = fgetc(file);
-			} --column;
-			ungetc(character, file);
+				token.lexeme[counter] = character;
+				character = fgetc(file); ++column;
+			}
+			ungetc(character, file); --column;
 			token.lexeme[counter] = '\0';
 			if(strcmp(token.lexeme, "if") == 0) { 
 				token.code = IF; 
@@ -262,18 +261,18 @@ Token scanner(FILE * file) {
 						character = fgetc(file); ++column;
 					}
 					token.lexeme[counter] = '\0';
-					ungetc(character, file);
+					ungetc(character, file); --column;
 					token.code = FLOAT_VALUE;
 				} else {
-					ungetc(character, file);
+					ungetc(character, file); --column;
 					token.error = SECOND;
 					token.lexeme[counter] = '\0';
-					token.line = ++line; token.column = column;
+					token.line = line; token.column = column;
 					scannerErrorPrinter();
 					exit(EXIT_SUCCESS);
 				}
 			} else {
-				ungetc(character, file);
+				ungetc(character, file); --column;
 				token.lexeme[counter] = '\0';
 				token.code = INT_VALUE;
 			}
@@ -288,12 +287,12 @@ Token scanner(FILE * file) {
 					character = fgetc(file); ++column;
 				}
 				token.lexeme[counter] = '\0';
-				ungetc(character, file);
+				ungetc(character, file); --column;
 				token.code = FLOAT_VALUE;
 			} else {
 				token.error = SECOND;
 				token.lexeme[counter] = '\0';
-				token.line = ++line; token.column = column;
+				token.line = line; token.column = column;
 				scannerErrorPrinter();
 				exit(EXIT_SUCCESS);
 			}
@@ -314,7 +313,7 @@ Token scanner(FILE * file) {
 				token.code = CHAR_VALUE;
 			} else {
 				token.error = FOURTH;
-				token.line = ++line; token.column = column;
+				token.line = line; token.column = column;
 				scannerErrorPrinter();
 				exit(EXIT_SUCCESS);
 			}
@@ -323,19 +322,22 @@ Token scanner(FILE * file) {
 		// CARACTERES BRANCOS
 
 		else if(character == TAB) {
-			column += 3; goto Start;
+			column += 4; goto Start;
 		} else if(character == NEWLINE) {
 			column = 0, ++line; goto Start;
 		} else if(character == RETURN) {
-			column = 0; goto Start;
+			column = 0; ++line; goto Start;
 		} else if(feof(file)) {
 			token.code = END_OF_FILE;
 		} else { 
 			token.error = FIRST; 
-			token.line = ++line; token.column = column;
+			token.line = line; token.column = column;
 			scannerErrorPrinter(); 
 			exit(EXIT_SUCCESS); 
 		}
-		End: token.line = ++line; token.column = column; tokenPrinter(); return token;  
+
+		//tokenPrinter();
+
+		token.line = line; token.column = column; return token;  
 	}        
 }

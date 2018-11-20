@@ -3,11 +3,11 @@
 
 int main(int argc, char ** argv) {
     FILE * file;
-    if((file = (fopen("scannerx.txt", "r"))) == NULL) {
+    if((file = (fopen(argv[1], "r"))) == NULL) {
         printf("\nERRO na abertura do arquivo!\n");
 		exit(EXIT_FAILURE);
     } else {
-		line = 0; column = 0;
+		line = 1; column = 1;
 		program(file);
 		if(feof(file)) {
 			printf("\n\n[FIM DE ARQUIVO]\n");
