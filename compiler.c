@@ -7,7 +7,7 @@ int main(int argc, char ** argv) {
         printf("\nERRO na abertura do arquivo!\n");
 		exit(EXIT_FAILURE);
     } else {
-		line = 1; column = 1;
+		line = 1; column = 1; isDiv = FALSE;
 		program(file);
 		if(feof(file)) {
 			printf("\n\n[FIM DE ARQUIVO]\n");

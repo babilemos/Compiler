@@ -119,6 +119,7 @@ typedef enum blank {
 } Blank;
 
 Token token;
+Boolean isDiv;
 Stack * symbolTable;
-int scope, line, column;
+int scope, line, column, label;
 #endif

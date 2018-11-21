@@ -229,10 +229,15 @@ Token term(FILE * file) {
 	Token temp1, temp2; temp1.code = temp2.code = INIT;
 	temp1 = factor(file);
 	while(token.code == DIVISION || token.code == MULTIPLICATION) {
+		if(token.code == DIVISION) { isDiv = TRUE; }
+		else { isDiv = FALSE; }
 		token = scanner(file);
 		temp2 = factor(file);
 		if(temp2.code == CHAR_VALUE || temp2.code == INT_VALUE || temp2.code == FLOAT_VALUE) {
-			if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
+			if(temp1.code == INT_VALUE && temp2.code == INT_VALUE && isDiv == TRUE) {
+				temp1.code = FLOAT_VALUE;
+			}
+			else if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
 				temp1.code = FLOAT_VALUE;
 			}
 			else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
