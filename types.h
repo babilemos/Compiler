@@ -91,12 +91,18 @@ typedef enum error {
 	THIRTY_FOURTH = 133
 } Error;
 
+typedef enum boolean {
+    FALSE = 0,
+    TRUE = 1,
+} Boolean;
+
 typedef struct token {
     Code code;
     char lexeme[SIZE];
     Error error;
 	int line;
 	int column;
+	Boolean isTemp;
 } Token;
 
 typedef struct stack {
@@ -105,11 +111,6 @@ typedef struct stack {
 	int scope;
 	struct stack * next;
 } Stack;
-
-typedef enum boolean {
-    FALSE =  0,
-    TRUE = 1,
-} Boolean;
 
 typedef enum blank {  
     SPACE = 32,
@@ -121,5 +122,5 @@ typedef enum blank {
 Token token;
 Boolean isDiv;
 Stack * symbolTable;
-int scope, line, column, label;
+int scope, line, column, label, temp;
 #endif

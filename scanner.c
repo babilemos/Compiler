@@ -1,5 +1,7 @@
 #include "types.h"
 
+// PRINTA TODOS OS TOKENS LIDOS
+
 void tokenPrinter() {
     if(token.code == INT_VALUE) {
         printf("%s\n", token.lexeme);
@@ -93,6 +95,8 @@ void tokenPrinter() {
         printf("[OPERADOR DE DIFERENCA]\n");
     }
 } 
+
+// PRINTA TODOS OS ERROS DO SCANNER
 
 void scannerErrorPrinter() {
 	if(token.error == FIRST) {
@@ -308,8 +312,6 @@ Token scanner(FILE * file) {
 			token.lexeme[counter] = character; ++counter;
 			token.lexeme[counter] = '\0';
 			if(character == '\'') {
-				token.lexeme[0] = token.lexeme[1];
-				token.lexeme[1] = '\0';
 				token.code = CHAR_VALUE;
 			} else {
 				token.error = FOURTH;

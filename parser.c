@@ -117,6 +117,7 @@ void variables(FILE * file) {
 
 void commands(FILE * file) {
 	//<comando> ::= <comando_básico> | <iteração> | if "("<expr_relacional>")" <comando> {else <comando>}?
+	int lbl;
 	if(token.code == IDENTIFIER || token.code == OPEN_BRACES) {
 		basicCommands(file);
 	}
@@ -129,8 +130,10 @@ void commands(FILE * file) {
 			token = scanner(file);
 			relationalExpression(file);
 			if(token.code == CLOSE_PARENTHESIS) {
+				++label; lbl = label; printf("if T%d == 0 goto L%d\n", temp, lbl);
 				token = scanner(file);
 				commands(file);
+				printf("L%d: \n", lbl);
 				if(token.code == ELSE) {
 					token = scanner(file);
 					commands(file);
@@ -152,16 +155,21 @@ void commands(FILE * file) {
 
 void relationalExpression(FILE * file) {
 	//<expr_relacional> ::= <expr_arit> <op_relacional> <expr_arit>
+	int cd;
+	Boolean isConvertion = FALSE;
 	Token temp1, temp2; temp1.code = temp2.code = INIT;
 	temp1 = arithmeticExpression(file);
 	if(token.code == EQUAL || token.code == NOT_EQUAL || token.code == LESS_THAN || token.code == LESS_THAN_OR_EQUAL || token.code == GREATER_THAN || token.code == GREATER_THAN_OR_EQUAL) {
+		cd = token.code;
 		token = scanner(file);
 		temp2 = arithmeticExpression(file);
 		if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
 			temp1.code = FLOAT_VALUE;
+			++temp; printf("\nT%d = (float) %s\n", temp, temp1.lexeme); isConvertion = TRUE;
 		}
 		else if(temp1.code == FLOAT_VALUE && temp2.code == INT_VALUE) {
 			temp2.code = FLOAT_VALUE;
+			++temp; printf("\nT%d = (float) %s\n", temp, temp2.lexeme); isConvertion = TRUE;
 		}
 		else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
 			token.error = THIRTY_SECOND;
@@ -176,6 +184,16 @@ void relationalExpression(FILE * file) {
 			programErrorPrinter();
 			exit(EXIT_SUCCESS);
 		}
+		++temp; printf("T%d = %s", temp, temp1.lexeme);
+		if(cd == EQUAL) { printf(" == "); }
+		else if(cd == NOT_EQUAL) { printf(" != "); }
+		else if(cd == LESS_THAN) { printf(" < "); }
+		else if(cd == LESS_THAN_OR_EQUAL) { printf(" <= "); }
+		else if(cd == GREATER_THAN) { printf(" > "); }
+		else { printf(" >= "); }
+		if(isConvertion == TRUE) { printf("T%d", temp); }
+		else { printf("%s ", temp2.lexeme); }
+		printf("\n");
 	} else {
 		token.error = TWENTY_FOURTH;
 		programErrorPrinter();
@@ -187,13 +205,13 @@ void relationalExpression(FILE * file) {
 
 Token factor(FILE * file) {
 	//<fator> ::= “(“ <expr_arit> “)” | <id> | <real> | <inteiro> | <char>
-	Token temp; temp.code = INIT;
+	Token temp1; temp1.code = INIT;
 	if(token.code == OPEN_PARENTHESIS) {
 		token = scanner(file);
-		temp = arithmeticExpression(file);
+		temp1 = arithmeticExpression(file);
 		if(token.code == CLOSE_PARENTHESIS) {
 			token = scanner(file);
-			return temp;
+			return temp1;
 		} else {
 			token.error = TWENTY_SIXTH;
 			programErrorPrinter();
@@ -201,20 +219,20 @@ Token factor(FILE * file) {
 		}
 	}
 	else if(token.code == IDENTIFIER) {
-		temp = catchVariable(token.lexeme, scope);
-		if(temp.code == OPS) {
+		temp1 = catchVariable(token.lexeme, scope);
+		if(temp1.code == OPS) {
 			token.error = THIRTY_FIRST;
 			programErrorPrinter();
 			exit(EXIT_SUCCESS);
 		} else {
 			token = scanner(file);
-			return temp;
+			return temp1;
 		}
 	} else if(token.code == FLOAT_VALUE || token.code == CHAR_VALUE || token.code == INT_VALUE) {
-		strcpy(temp.lexeme, token.lexeme);
-		temp.code = token.code;
+		strcpy(temp1.lexeme, token.lexeme);
+		temp1.code = token.code;
 		token = scanner(file);
-		return temp;
+		return temp1;
 	} else {
 		token.error = TWENTY_NINTH;
 		programErrorPrinter();
@@ -226,19 +244,24 @@ Token factor(FILE * file) {
 
 Token term(FILE * file) { 
 	//<termo> ::= <termo> "*" <fator> | <termo> “/” <fator> | <fator>
+	Boolean isConvertion = FALSE;
 	Token temp1, temp2; temp1.code = temp2.code = INIT;
 	temp1 = factor(file);
 	while(token.code == DIVISION || token.code == MULTIPLICATION) {
-		if(token.code == DIVISION) { isDiv = TRUE; }
-		else { isDiv = FALSE; }
+		++temp; printf("T%d =", temp); temp1.isTemp = TRUE;
+		printf("%s", temp1.lexeme);
+		if(token.code == DIVISION) { isDiv = TRUE; printf(" / "); }
+		else if(token.code == MULTIPLICATION) { isDiv = FALSE; printf(" * "); }
 		token = scanner(file);
 		temp2 = factor(file);
 		if(temp2.code == CHAR_VALUE || temp2.code == INT_VALUE || temp2.code == FLOAT_VALUE) {
 			if(temp1.code == INT_VALUE && temp2.code == INT_VALUE && isDiv == TRUE) {
 				temp1.code = FLOAT_VALUE;
+				++temp; printf("\nT%d = (float) %s\n", temp, temp1.lexeme); isConvertion = TRUE;
 			}
 			else if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
 				temp1.code = FLOAT_VALUE;
+				++temp; printf("\nT%d = (float) %s\n", temp, temp1.lexeme); isConvertion = TRUE;
 			}
 			else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
 				token.error = THIRTY_SECOND;
@@ -253,7 +276,9 @@ Token term(FILE * file) {
 				programErrorPrinter();
 				exit(EXIT_SUCCESS);
 			}
-		}	
+		}
+		if(isConvertion == TRUE) { printf("T%d", temp); }
+		else { printf("%s\n", temp2.lexeme); }
 	} 
 	return temp1;
 }
@@ -267,7 +292,8 @@ Token arithmeticExpression(FILE * file) {
 	temp2 = arithmeticExpressionL(file);
 	if(temp2.code == CHAR_VALUE || temp2.code == INT_VALUE || temp2.code == FLOAT_VALUE) {
 		if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
-			temp1.code = FLOAT_VALUE;
+			temp1.code = FLOAT_VALUE; temp1.isTemp == TRUE;
+			++temp; printf("\nT%d = (float) %s\n", temp, temp1.lexeme);
 		}
 		else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
 			token.error = THIRTY_SECOND;
@@ -287,8 +313,11 @@ Token arithmeticExpression(FILE * file) {
 }
 
 Token arithmeticExpressionL(FILE * file)  {
-	Token temp1, temp2; temp1.code = temp2.code = INIT;
+	Boolean isConvertion = FALSE;
+	int cd = INIT;
+	Token temp1, temp2; temp1.code = temp2.code = INIT; temp2.isTemp = FALSE;
 	if(token.code == ADDITION || token.code == SUBTRACTION) {
+		cd = token.code;
 		token = scanner(file);
 		temp1 = term(file);
 		temp2 = arithmeticExpressionL(file);
@@ -296,6 +325,7 @@ Token arithmeticExpressionL(FILE * file)  {
 	if(temp2.code == CHAR_VALUE || temp2.code == INT_VALUE || temp2.code == FLOAT_VALUE) {
 		if(temp1.code == INT_VALUE && temp2.code == FLOAT_VALUE) {
 			temp1.code = FLOAT_VALUE;
+			++temp; printf("\nT%d = (float) %s\n", temp, temp1.lexeme); isConvertion = TRUE;
 		}
 		else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
 			token.error = THIRTY_SECOND;
@@ -311,6 +341,10 @@ Token arithmeticExpressionL(FILE * file)  {
 			exit(EXIT_SUCCESS);
 		}
 	}	
+	if(cd == ADDITION) { printf(" + "); }
+	else if(cd == SUBTRACTION) { printf(" - "); }
+	if(isConvertion == TRUE || temp2.isTemp == TRUE) { printf("T%d\n", temp); }
+	else if(temp2.code == IDENTIFIER || temp2.code ==  CHAR_VALUE || temp2.code == INT_VALUE || temp2.code == FLOAT_VALUE) { printf("%s\n", temp2.lexeme); }
 	return temp1;
 }
 
@@ -318,6 +352,7 @@ Token arithmeticExpressionL(FILE * file)  {
 
 void assignment(FILE * file) {
 	//<atribuição> ::= <id> "=" <expr_arit> ";"
+	Boolean isConvertion = FALSE;
 	Token temp1, temp2; temp1.code = temp2.code = INIT;
 	temp1 = catchVariable(token.lexeme, scope);
 	if(temp1.code == OPS) {
@@ -333,6 +368,7 @@ void assignment(FILE * file) {
 			if(token.code == SEMICOLON) {
 				if(temp1.code == FLOAT_VALUE && temp2.code == INT_VALUE) {
 					temp2.code = FLOAT_VALUE;
+					++temp; printf("T%d = (float) %s\n", temp, temp2.lexeme); isConvertion = TRUE;
 				}
 				else if(temp1.code == CHAR_VALUE && temp2.code != CHAR_VALUE) {
 					token.error = THIRTY_SECOND;
@@ -347,6 +383,9 @@ void assignment(FILE * file) {
 					programErrorPrinter();
 					exit(EXIT_SUCCESS);
 				}
+				printf("%s = ", temp1.lexeme);
+				if(isConvertion == TRUE || temp2.isTemp == TRUE) { printf("T%d\n", temp); }
+				else  { printf("%s\n", temp2.lexeme); }
 				token = scanner(file);
 			} else {
 				token.error = FIFTEENTH;
@@ -377,14 +416,20 @@ void basicCommands(FILE * file) {
 
 void loop(FILE * file) {
 	//<iteração> ::= while "("<expr_relacional>")" <comando> | do <comando> while "("<expr_relacional>")"";"
+	int lbl;
 	if(token.code == WHILE) {
+		++label; lbl = label;
+		++label; printf("L%d: \n", lbl);
 		token = scanner(file);
 		if(token.code == OPEN_PARENTHESIS) {
 			token = scanner(file);
 			relationalExpression(file);
 			if(token.code == CLOSE_PARENTHESIS) {
+				printf("if T%d == 0 goto L%d\n", temp, lbl + 1);
 				token = scanner(file);
 				commands(file);
+				printf("goto L%d\n", lbl);
+				printf("L%d: \n", lbl + 1);
 			} else {
 				token.error = NINETEENTH;
 				programErrorPrinter();
@@ -397,6 +442,8 @@ void loop(FILE * file) {
 		}
 	}
 	else if(token.code == DO) {
+		++label; lbl = label;
+		++label; printf("L%d: \n", lbl);
 		token = scanner(file);
 		commands(file);
 		if(token.code == WHILE) {
@@ -407,6 +454,9 @@ void loop(FILE * file) {
 				if(token.code == CLOSE_PARENTHESIS) {
 					token = scanner(file);
 					if(token.code == SEMICOLON) {
+						printf("if T%d == 0 goto L%d\n", temp, lbl + 1);
+						printf("goto L%d\n", lbl);
+						printf("L%d: \n", lbl + 1);
 						token = scanner(file);
 					} else {
 						token.error = TWENTY_THIRD;
@@ -434,6 +484,8 @@ void loop(FILE * file) {
 		exit(EXIT_SUCCESS);
 	}
 }
+
+// PRINTA ERROS DO PARSER E DO SEMANTICO
 
 void programErrorPrinter() {
 	if(token.error == FIFTH) {
